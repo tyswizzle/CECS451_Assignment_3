@@ -52,7 +52,7 @@ def get_best_neighbor(neighbors):
 
 
 if __name__ == '__main__':
-    size = 5
+    size = 8
     solution = None
     restarts = -1
     start = time.time()

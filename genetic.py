@@ -1,3 +1,4 @@
+import time
 from board import Board
 import random
 from math import comb
@@ -10,8 +11,10 @@ def mutate(genes, chance):
         index = random.randint(0, len(genes[0]) - 1)
         replacement_number = random.randint(0, len(genes[0]) - 1)
 
-        old_gene = genes[chosen_gene]
-        genes[chosen_gene] = old_gene[:index - 1] + str(replacement_number) + old_gene[index:]
+        old_gene = list(genes[chosen_gene])
+        old_gene[index] = str(replacement_number)
+        mutated_gene = ''.join(old_gene)
+        genes[chosen_gene] = mutated_gene
 
     return genes
 
@@ -20,10 +23,9 @@ def crossover(genes, selections):
     # Check if we have an even number of genes
     if len(genes) % 2 == 1:
         return
-    num_pairs = len(genes) / 2
+
     new_genes = []
     ranges = []
-    pre_cross_pairs = {}
     post_cross_genes = []
     for i in range(len(selections)):
         if i == 0:
@@ -39,16 +41,19 @@ def crossover(genes, selections):
                 new_genes.append(genes[i - 1])
                 break
 
+    if len(new_genes) != len(genes):
+        print("Something fucked up")
+        print(genes)
+        print(new_genes)
+        print(ranges)
+
     # Pair off your new genes
-    n = 0
-    while n <= num_pairs:
-        pre_cross_pairs[(new_genes[n], new_genes[n + 1])] = random.randint(0, len(genes[0]) - 1)
-        n += 2
+    pre_cross_pairs = {new_genes[i]: new_genes[i + 1] for i in range(0, len(new_genes), 2)}
 
     for p in pre_cross_pairs:
-        split = int(pre_cross_pairs[p])
-        temp1 = p[0]
-        temp2 = p[1]
+        split = random.randint(0, len(p) - 1)
+        temp1 = p
+        temp2 = pre_cross_pairs[p]
 
         post_cross_genes.append(temp1[:split] + temp2[split:])
         post_cross_genes.append(temp2[:split] + temp1[split:])
@@ -65,7 +70,7 @@ def selection(genes):
         boards.append(board)
         fitness.append(board.get_fit())
     fitness_sum = sum(fitness)
-    return [round(x / fitness_sum,2) for x in fitness]
+    return [x / fitness_sum for x in fitness]
 
 
 def str_to_board(gene_string):
@@ -91,19 +96,34 @@ def check(genes):
 
     return None
 
-if __name__ == '__main__':
 
-    # size = 8
-    # gene_string = "32543213"
-    # test = str_to_board(gene_string)
-    # test.gene_fitness()
-    # test.show()
-    genes = ['24748552', '32752411', '24415124', '32543213']
+def genetic_algorithm(states):
+
+    genes = []  # Place holder for our genes
+
+    # Randomly generate our genes to be used
+    for i in range(states):
+        gene_lst = []
+        for j in range(states):
+            gene_lst.append(random.randint(0, states - 1))
+
+        gene = ''.join(str(n) for n in gene_lst)
+        genes.append(gene)
+
+    # Loop through the algorithm until the solution is found
+    start = time.time()
     while not check(genes):
         sel = selection(genes)
         genes = crossover(genes, sel)
-        genes = mutate(genes, 1)
+        genes = mutate(genes, 0.75)
+    end = time.time()
 
     solution = str_to_board(check(genes))
     solution.gene_fitness()
     solution.show()
+    running = int((end - start) * 1000)
+    print("Running Time: " + f"{running:,}" + " ms")
+
+
+if __name__ == '__main__':
+    genetic_algorithm(8)
